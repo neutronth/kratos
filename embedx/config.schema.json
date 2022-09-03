@@ -663,6 +663,30 @@
         }
       }
     },
+    "selfServiceAfterLDAPLoginMethod": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default_browser_return_url": {
+          "$ref": "#/definitions/defaultReturnTo"
+        },
+        "hooks": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/selfServiceSessionRevokerHook"
+              },
+              {
+                "$ref": "#/definitions/selfServiceWebHook"
+              }
+            ]
+          },
+          "uniqueItems": true,
+          "additionalItems": false
+        }
+      }
+    },
     "selfServiceAfterRegistrationMethod": {
       "type": "object",
       "additionalProperties": false,
@@ -740,6 +764,9 @@
         "oidc": {
           "$ref": "#/definitions/selfServiceAfterOIDCLoginMethod"
         },
+        "ldap": {
+          "$ref": "#/definitions/selfServiceAfterLDAPLoginMethod"
+        },
         "hooks": {
           "$ref": "#/definitions/selfServiceHooks"
         }
@@ -768,6 +795,9 @@
           "$ref": "#/definitions/selfServiceAfterRegistrationMethod"
         },
         "oidc": {
+          "$ref": "#/definitions/selfServiceAfterRegistrationMethod"
+        },
+        "ldap": {
           "$ref": "#/definitions/selfServiceAfterRegistrationMethod"
         },
         "hooks": {
@@ -1429,6 +1459,151 @@
                   }
                 }
               }
+            },
+            "ldap": {
+              "type": "object",
+              "title": "Specify LDAP Configuration",
+              "showEnvVarBlockForObject": true,
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "title": "Enables LDAP Method",
+                  "default": false
+                },
+                "config": {
+                  "type": "object",
+                  "properties": {
+                    "ldap_url": {
+                      "type": "string",
+                      "description": "The LDAP URL",
+                      "examples": [
+                        "ldap://localhost:389",
+                        "ldaps://localhost:636"
+                      ]
+                    },
+                    "bind_dn": {
+                      "type": "string",
+                      "description":
+                        "The DN of service account that used in the phase of users and groups searching",
+                      "examples": [
+                        "cn=ReadyOnlyAdmin,cn=users,dc=example,dc=com"
+                      ]
+                    },
+                    "bind_pw": {
+                      "type": "string",
+                      "description": "The password of service account"
+                    },
+                    "user_search": {
+                      "type": "object",
+                      "properties": {
+                        "base_dn": {
+                          "type": "string",
+                          "description": "Base DN to start searching",
+                          "examples": ["ou=people,dc=example,dc=com"]
+                        },
+                        "filter": {
+                          "type": "string",
+                          "description": "Filter applied on searching",
+                          "examples": ["(objectClass=person)"]
+                        },
+                        "username": {
+                          "type": "string",
+                          "description": "Username attribute for comparing user entries",
+                          "examples": ["uid"]
+                        },
+                        "identity_attributes": {
+                          "type": "array",
+                          "description": "Extracting identity attributes",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "Mapping name of the attribute",
+                                "examples": ["email"]
+                              },
+                              "attr": {
+                                "type": "string",
+                                "description": "Mapping attribute",
+                                "examples": ["mail"]
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": ["base_dn","username","identity_attributes"]
+                    },
+                    "group_search": {
+                      "type": "object",
+                      "properties": {
+                        "base_dn": {
+                          "type": "string",
+                          "description": "Base DN to start searching",
+                          "examples": ["ou=groups,dc=example,dc=com"]
+                        },
+                        "filter": {
+                          "type": "string",
+                          "description": "Filter applied on searching",
+                          "examples": ["(objectClass=groupOfUniqueNames)"]
+                        },
+                        "name_attr": {
+                          "type": "string",
+                          "description": "Attribute represents the group name",
+                          "examples": ["cn"]
+                        },
+                        "groups_from_user_memberof": {
+                          "type": "boolean",
+                          "description": "Get user groups from user's memberOf attribute",
+                          "default": false
+                        },
+                        "user_matchers": {
+                          "type": "array",
+                          "description": "Additional group and user attributes matcher, will be ignored when groups_from_user_memberof is true",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "user_attr": {
+                                "type": "string",
+                                "description": "User attribute",
+                                "examples": ["uid"]
+                              },
+                              "group_attr": {
+                                "type": "string",
+                                "description": "Group attribute",
+                                "examples": ["uniqueMember"]
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": ["base_dn","name_attr"]
+                    },
+                    "update_user_identity": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "description": "Enable the updating user identity when the user is authenticated",
+                          "default": false
+                        },
+                        "refresh_time": {
+                          "type": "string",
+                          "description": "The user identity should be refreshed once the user is authenticated and outdated, outdated = last update time + refresh time",
+                          "examples": ["5m", "1h", "24h"],
+                          "default": "0s"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": ["ldap_url", "bind_dn", "bind_pw"]
+                }
+              },
+              "required": ["enabled", "config"]
             }
           }
         }

@@ -1,0 +1,132 @@
+version: v0.10.1
+
+dsn: memory
+
+serve:
+  public:
+    base_url: https://local-idp.sforcenetworks.com/account/public
+    cors:
+      enabled: true
+      allowed_origins:
+        - https://local-idp.sforcenetworks.com
+      allow_credentials: true
+
+  admin:
+    base_url: https://local-idp.sforcenetworks.com/account/admin
+
+session:
+  cookie:
+    same_site: Strict
+    persistent: false
+
+selfservice:
+  default_browser_return_url: https://local-idp.sforcenetworks.com/
+  allowed_return_urls:
+    - https://local-idp.sforcenetworks.com
+
+  methods:
+    password:
+      enabled: false
+    ldap:
+      enabled: true
+      config:
+        ldap_url: ldap://local-ldap.sforcenetworks.com:3389
+        bind_dn: cn=Directory Manager
+        bind_pw: testing123
+        user_search:
+          base_dn: ou=people,dc=authen,dc=in,dc=th
+          filter: (objectClass=person)(userStatus=active)
+          username: uid
+          identity_attributes:
+          - name: firstname
+            attr: givenName
+          - name: lastname
+            attr: sn
+          - name: title
+            attr: personalTitle
+          - name: email
+            attr: mail
+        group_search:
+          base_dn: ou=groups,dc=authen,dc=in,dc=th
+          filter: (objectClass=groupOfUniqueNames)
+          name_attr: cn
+          groups_from_user_memberof: true
+          user_matchers:
+          - user_attr: uid
+            group_attr: uniqueMember
+        update_user_identity:
+          enabled: true
+          refresh_time: 5m
+
+  flows:
+    error:
+      ui_url: https://local-idp.sforcenetworks.com/error
+
+    settings:
+      ui_url: https://local-idp.sforcenetworks.com/settings
+      privileged_session_max_age: 15m
+
+    recovery:
+      enabled: false
+      ui_url: https://local-idp.sforcenetworks.com/recovery
+
+    verification:
+      enabled: false
+      ui_url: https://local-idp.sforcenetworks.com/verify
+      after:
+        default_browser_return_url: https://local-idp.sforcenetworks.com/
+
+    logout:
+      after:
+        default_browser_return_url: https://local-idp.sforcenetworks.com/auth/login
+
+    login:
+      ui_url: https://local-idp.sforcenetworks.com/auth/login
+      lifespan: 10m
+
+    registration:
+      lifespan: 10m
+      ui_url: https://local-idp.sforcenetworks.com/auth/registration
+      after:
+        password:
+          hooks:
+            - hook: session
+        oidc:
+          hooks:
+            - hook: session
+        ldap:
+          hooks:
+            - hook: session
+
+log:
+  level: info
+  format: text
+  leak_sensitive_values: false
+
+secrets:
+  cookie:
+    - PLEASE-CHANGE-ME-I-AM-VERY-INSECURE
+  cipher:
+    - 32-LONG-SECRET-NOT-SECURE-AT-ALL
+
+ciphers:
+  algorithm: xchacha20-poly1305
+
+hashers:
+  algorithm: argon2
+  argon2:
+    parallelism: 1
+    memory: 128MB
+    iterations: 2
+    salt_length: 16
+    key_length: 16
+
+identity:
+  default_schema_id: default
+  schemas:
+    - id: default
+      url: file:///etc/config/kratos/identity.schema.json
+
+courier:
+  smtp:
+    connection_uri: smtps://test:test@mailslurper:1025/?skip_ssl_verify=true

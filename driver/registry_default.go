@@ -60,6 +60,8 @@ import (
 	"github.com/ory/kratos/selfservice/flow/registration"
 	"github.com/ory/kratos/selfservice/strategy/oidc"
 
+	"github.com/ory/kratos/selfservice/strategy/ldap"
+
 	"github.com/ory/herodot"
 
 	"github.com/ory/kratos/driver/config"
@@ -279,6 +281,7 @@ func (m *RegistryDefault) selfServiceStrategies() []interface{} {
 			totp.NewStrategy(m),
 			webauthn.NewStrategy(m),
 			lookup.NewStrategy(m),
+			ldap.NewStrategy(m),
 		}
 	}
 
